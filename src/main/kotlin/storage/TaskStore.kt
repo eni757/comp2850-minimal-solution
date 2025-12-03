@@ -167,6 +167,7 @@ class TaskStore(
         return removed
     }
 
+
     /**
      * Toggle task completion status.
      *

@@ -52,6 +52,20 @@
                 {% if msg == "too_long" %}Title is too long (max 200 characters){% else %}Title is required. Please enter at least one character.{% endif %}
             </p>
             {% endif %}
+            <label for="task-title">Label Title</label>
+            <input type="text"
+                   id="label-title"
+                   name="lable"
+                   required
+                   {% if error == "title" %}aria-invalid="true" aria-describedby="title-hint title-error"{% else %}aria-describedby="title-hint"{% endif %}
+                   placeholder="e.g., Groceries">
+
+            <small id="title-hint">Keep it short and specific.</small>
+            {% if error == "title" %}
+            <p id="label-error" class="error-message">
+                {% if msg == "too_long" %}Label is too long (max 200 characters){% else %}label is required. Please enter at least one character.{% endif %}
+            </p>
+            {% endif %}
 
             <button type="submit">Add Task</button>
         </form>
@@ -69,6 +83,30 @@
               hx-push-url="true">
 
             <label for="search-query">Filter by title</label>
+            <input type="search"
+                   id="search-query"
+                   name="q"
+                   placeholder="Type to filter..."
+                   aria-describedby="search-hint"
+                   value="{{ query | default('') }}">
+
+            <small id="search-hint">Filters tasks as you type; works without JavaScript.</small>
+            <button type="submit">Apply Filter</button>
+        </form>
+    </section>
+
+    {# Search/Labels Tasks Form - Added by Me #}
+    <section aria-labelledby="search-heading">
+        <h2 id="search-heading">Labels</h2>
+
+        <form action="/tasks" method="get"
+              hx-get="/tasks/fragment"
+              hx-trigger="keyup changed delay:300ms from:#search-query, submit"
+              hx-target="#task-area"
+              hx-swap="innerHTML"
+              hx-push-url="true">
+
+            <label for="search-query">Filter by label</label>
             <input type="search"
                    id="search-query"
                    name="q"
