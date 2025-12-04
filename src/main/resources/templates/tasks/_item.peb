@@ -1,5 +1,9 @@
 <li id="task-{{ task.id }}" class="task-view">
   <span class="task-title">{{ task.title }}</span>
+  
+  {% if task.label %}
+  <span class="task-label">{{ task.label }}</span>
+  {% endif %}
 
   <form action="/tasks/{{ task.id }}/edit" method="get" style="display: inline;"
         hx-get="/tasks/{{ task.id }}/edit"

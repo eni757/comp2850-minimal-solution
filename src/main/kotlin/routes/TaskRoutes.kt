@@ -42,6 +42,7 @@ fun Routing.configureTaskRoutes(store: TaskStore = TaskStore()) {
     delete("/tasks/{id}") { call.handleDeleteTask(store) }  // HTMX path (RESTful)
     post("/tasks/{id}/delete") { call.handleDeleteTask(store) }  // No-JS fallback
     get("/tasks/search") { call.handleSearchTasks(store) }
+    post("/tasks/clear") { call.handleClearAll(store) } 
 }
 
 /**
@@ -82,11 +83,13 @@ private suspend fun ApplicationCall.handleCreateTask(store: TaskStore) {
     timed("T3_add", jsMode()) {
         val params = receiveParameters()
         val title = params["title"]?.trim() ?: ""
+        val label = params["label"]?.trim() ?: ""
         val query = params["q"].toQuery()
 
-        when (val validation = Task.validate(title)) {
-            is ValidationResult.Error -> handleCreateTaskError(store, title, query, validation)
-            ValidationResult.Success -> handleCreateTaskSuccess(store, title, query)
+
+        when (val validation = Task.validate(title, label)) {
+            is ValidationResult.Error -> handleCreateTaskError(store, title,label, query, validation)
+            ValidationResult.Success -> handleCreateTaskSuccess(store, title,label, query)
         }
     }
 }
@@ -94,6 +97,7 @@ private suspend fun ApplicationCall.handleCreateTask(store: TaskStore) {
 private suspend fun ApplicationCall.handleCreateTaskError(
     store: TaskStore,
     title: String,
+    label: String,
     query: String,
     validation: ValidationResult.Error,
 ) {
@@ -102,6 +106,9 @@ private suspend fun ApplicationCall.handleCreateTaskError(
             title.isBlank() -> "blank_title"
             title.length < Task.MIN_TITLE_LENGTH -> "min_length"
             title.length > Task.MAX_TITLE_LENGTH -> "max_length"
+            label.isBlank() -> "blank_title"
+            label.length < Task.MIN_TITLE_LENGTH -> "min_length"
+            label.length > Task.MAX_TITLE_LENGTH -> "max_length"
             else -> "invalid_title"
         }
     logValidationError("T3_add", outcome)
@@ -118,9 +125,10 @@ private suspend fun ApplicationCall.handleCreateTaskError(
 private suspend fun ApplicationCall.handleCreateTaskSuccess(
     store: TaskStore,
     title: String,
+    label: String,
     query: String,
 ) {
-    val task = Task(title = title)
+    val task = Task(title = title, label = label)
     store.add(task)
 
     if (isHtmxRequest()) {
@@ -199,6 +207,22 @@ private suspend fun ApplicationCall.handleDeleteTask(store: TaskStore) {
                 messageStatusFragment(
                     """Task "${task?.title ?: "Unknown"}" deleted.""",
                 )
+            respondText(statusHtml, ContentType.Text.Html)
+        } else {
+            response.headers.append("Location", "/tasks")
+            respond(HttpStatusCode.SeeOther)
+        }
+    }
+}
+//making one for delete all, hopefully this works. 
+private suspend fun ApplicationCall.handleClearAll(store: TaskStore) {
+    timed("T5_clear_all", jsMode()) {
+
+        store.clear() // wipes CSV + rewrites header
+
+        if (isHtmxRequest()) {
+            // return updated empty list or status message
+            val statusHtml = messageStatusFragment("All tasks cleared.")
             respondText(statusHtml, ContentType.Text.Html)
         } else {
             response.headers.append("Location", "/tasks")
@@ -336,7 +360,8 @@ private suspend fun ApplicationCall.handleUpdateTask(store: TaskStore) {
     }
 
     val newTitle = receiveParameters()["title"]?.trim() ?: ""
-    val validation = Task.validate(newTitle)
+    val newLabel = receiveParameters()["label"]?.trim() ?: ""
+    val validation = Task.validate(newTitle, newLabel)
 
     if (validation is ValidationResult.Error) {
         if (isHtmxRequest()) {
@@ -354,7 +379,7 @@ private suspend fun ApplicationCall.handleUpdateTask(store: TaskStore) {
     }
 
     // Update task
-    val updated = task.copy(title = newTitle)
+    val updated = task.copy(title = newTitle, label=newLabel)
     store.update(updated)
 
     if (isHtmxRequest()) {

@@ -19,6 +19,7 @@ import java.util.UUID
 data class Task(
     val id: String = UUID.randomUUID().toString(),
     val title: String,
+    val label: String,
     val completed: Boolean = false,
     val createdAt: LocalDateTime = LocalDateTime.now(),
 ) {
@@ -48,7 +49,7 @@ data class Task(
          * @param title Title to validate
          * @return ValidationResult.Success or ValidationResult.Error(message)
          */
-        fun validate(title: String): ValidationResult =
+        fun validate(title: String, label: String): ValidationResult =
             when {
                 title.isBlank() ->
                     ValidationResult.Error("Title is required. Please enter a task description.")
@@ -61,6 +62,18 @@ data class Task(
                 title.length > MAX_TITLE_LENGTH ->
                     ValidationResult.Error(
                         "Title must be less than $MAX_TITLE_LENGTH characters. Currently: ${title.length} characters.",
+                    )
+                label.isBlank() ->
+                    ValidationResult.Error("label is required. Please enter a task description.")
+
+                label.length < MIN_TITLE_LENGTH ->
+                    ValidationResult.Error(
+                        "label must be at least $MIN_TITLE_LENGTH characters. Currently: ${label.length} characters.",
+                    )
+
+                label.length > MAX_TITLE_LENGTH ->
+                    ValidationResult.Error(
+                        "label must be less than $MAX_TITLE_LENGTH characters. Currently: ${label.length} characters.",
                     )
 
                 else -> ValidationResult.Success
@@ -80,7 +93,8 @@ data class Task(
     fun toCSV(): String {
         val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
         val escapedTitle = title.replace("\"", "\"\"")
-        return "$id,\"$escapedTitle\",$completed,${createdAt.format(formatter)}"
+        val escapedLabel = label.replace("\"", "\"\"")
+        return "$id,\"$escapedTitle\", \"$escapedLabel\",$completed,${createdAt.format(formatter)}"
     }
 
     /**
@@ -101,6 +115,7 @@ data class Task(
         mapOf(
             "id" to id,
             "title" to title,
+            "label" to label, 
             "completed" to completed,
             "createdAt" to createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
             "createdAtISO" to createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),

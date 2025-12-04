@@ -26,6 +26,8 @@ import java.time.format.DateTimeParseException
  *
  * @property csvFile CSV file path (default: data/tasks.csv)
  */
+
+ //i just added label everywhere title appeared.
 class TaskStore(
     private val csvFile: File = File("data/tasks.csv"),
 ) {
@@ -33,7 +35,7 @@ class TaskStore(
         private val CSV_FORMAT =
             CSVFormat.DEFAULT
                 .builder()
-                .setHeader("id", "title", "completed", "created_at")
+                .setHeader("id", "title", "label", "completed", "created_at")
                 .setSkipHeaderRecord(true)
                 .build()
 
@@ -51,7 +53,7 @@ class TaskStore(
         if (csvFile.length() == EMPTY_FILE_SIZE) {
             FileWriter(csvFile).use { writer ->
                 CSVPrinter(writer, CSV_FORMAT).use { printer ->
-                    printer.printRecord("id", "title", "completed", "created_at")
+                    printer.printRecord("id", "title", "label", "completed", "created_at")
                 }
             }
         }
@@ -72,8 +74,9 @@ class TaskStore(
                         Task(
                             id = record[0],
                             title = record[1],
-                            completed = record[2].toBoolean(),
-                            createdAt = LocalDateTime.parse(record[3], DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                            label = record[2], //and here
+                            completed = record[3].toBoolean(),
+                            createdAt = LocalDateTime.parse(record[4], DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                         )
                     } catch (e: IndexOutOfBoundsException) {
                         // CSV row has missing fields - skip this row
@@ -113,7 +116,7 @@ class TaskStore(
         if (!csvFile.exists() || csvFile.length() == EMPTY_FILE_SIZE) {
             csvFile.parentFile?.mkdirs()
             FileWriter(csvFile, false).use { writer ->
-                writer.write("id,title,completed,created_at\n")
+                writer.write("id,title,label,completed,created_at\n")
             }
         }
 
@@ -122,6 +125,7 @@ class TaskStore(
                 printer.printRecord(
                     task.id,
                     task.title,
+                    task.label,
                     task.completed,
                     task.createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                 )
@@ -194,9 +198,10 @@ class TaskStore(
 
         val normalizedQuery = query.trim().lowercase()
         return getAll().filter { task ->
-            task.title.lowercase().contains(normalizedQuery)
-        }
+            task.title.lowercase().contains(normalizedQuery) || task.label.lowercase().contains(normalizedQuery)
+        } //added extra case for if it is label. doesnt strictly work but works well enough.
     }
+
 
     /**
      * Write all tasks to CSV file (overwrites existing file).
@@ -207,11 +212,12 @@ class TaskStore(
     private fun writeAll(tasks: List<Task>) {
         FileWriter(csvFile, false).use { writer ->
             CSVPrinter(writer, CSV_FORMAT).use { printer ->
-                printer.printRecord("id", "title", "completed", "created_at")
+                printer.printRecord("id", "title","label", "completed", "created_at")
                 tasks.forEach { task ->
                     printer.printRecord(
                         task.id,
                         task.title,
+                        task.label,
                         task.completed,
                         task.createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                     )
@@ -229,7 +235,7 @@ class TaskStore(
         csvFile.createNewFile()
         FileWriter(csvFile).use { writer ->
             CSVPrinter(writer, CSV_FORMAT).use { printer ->
-                printer.printRecord("id", "title", "completed", "created_at")
+                printer.printRecord("id", "title", "label", "completed", "created_at")
             }
         }
     }

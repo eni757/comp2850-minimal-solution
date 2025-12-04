@@ -51,17 +51,18 @@
             <p id="title-error" class="error-message">
                 {% if msg == "too_long" %}Title is too long (max 200 characters){% else %}Title is required. Please enter at least one character.{% endif %}
             </p>
+            //added this, took title and changed to label
             {% endif %}
-            <label for="task-title">Label Title</label>
+            <label for="label-title">Label Title</label>
             <input type="text"
                    id="label-title"
-                   name="lable"
+                   name="label"
                    required
                    {% if error == "title" %}aria-invalid="true" aria-describedby="title-hint title-error"{% else %}aria-describedby="title-hint"{% endif %}
                    placeholder="e.g., Groceries">
 
-            <small id="title-hint">Keep it short and specific.</small>
-            {% if error == "title" %}
+            <small id="label-hint">Short label</small>
+            {% if error == "label" %}
             <p id="label-error" class="error-message">
                 {% if msg == "too_long" %}Label is too long (max 200 characters){% else %}label is required. Please enter at least one character.{% endif %}
             </p>
@@ -118,6 +119,15 @@
             <button type="submit">Apply Filter</button>
         </form>
     </section>
+
+    {# adding a clear all button, im so confused but this should in theory work #}
+    <form
+        hx-post="/tasks/clear"
+        hx-target="#task-list"
+        hx-swap="outerHTML"
+        hx-confirm="Are you sure you want to clear all tasks?">
+    <button type="submit">Clear all</button>
+    </form>
 
     {# Task List #}
     <section aria-labelledby="list-heading">
