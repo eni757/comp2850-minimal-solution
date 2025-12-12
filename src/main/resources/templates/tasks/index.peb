@@ -8,6 +8,12 @@
         <h1>Task Manager</h1>
         <p>
             Manage your tasks with full keyboard and screen reader support.
+            If you don't have a mouse, you can access the box the next box using:
+            <ul>
+            <li>tab to go to the next box</li>
+            <li>shift + tab to go to the previous box</li>
+            <li>enter to submit task</li>
+            </ul>
             {% if totalItems > 0 %}
                 Currently {{ totalItems }} task{% if totalItems != 1 %}s{% endif %}.
             {% else %}
